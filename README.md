@@ -1,69 +1,42 @@
-# Welcome to your Lovable project
+# Grade Management System (GMS)
 
-## Project info
+## Overview  
+The **Grade Management System (GMS)** is a web-based platform designed to automate student grading processes in **Kenyan secondary schools**. It replaces manual grade recording with a **secure, efficient, and user-friendly** system for **teachers, administrators, and students**.  
 
-**URL**: https://lovable.dev/projects/f03735ec-38a5-45ba-a21e-4652b29129a7
+## Features  
+### ✅ User Roles & Authentication  
+- **Teachers**: Enter grades, generate reports, and monitor student progress.  
+- **Administrators**: Manage users, configure settings, and oversee grading processes.  
+- **Students**: View grades and download report cards.  
+- Secure login with **JWT authentication** & **role-based access control (RBAC)**.  
 
-## How can I edit this code?
+### 📊 Grade Entry & Reporting  
+- Teachers can **input grades per subject**.  
+- Automatic **average calculation** & **class ranking**.  
+- Generate **PDF report cards** and **performance analytics**.  
 
-There are several ways of editing your application.
+### 🔒 Security & Data Integrity  
+- **Encrypted database storage** for student records.  
+- **Audit logs** track grade modifications.  
+- **Role-based access control (RBAC)** for system security.  
 
-**Use Lovable**
+### 🌐 Technology Stack  
+- **Frontend**: React.js + Tailwind CSS  
+- **Backend**: Django + Django REST Framework  
+- **Database**: PostgreSQL  
+- **Deployment**: Docker, AWS/GCP  
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f03735ec-38a5-45ba-a21e-4652b29129a7) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Installation & Setup  
+### 1️⃣ Prerequisites  
+Ensure you have the following installed:  
+- Node.js & npm  
+- Python & Django  
+- PostgreSQL  
+- Docker (for deployment)  
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
+### 2️⃣ Clone the Repository  
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/f03735ec-38a5-45ba-a21e-4652b29129a7) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+git clone https://github.com/yourusername/grade-management-system.git
+cd grade-management-system
