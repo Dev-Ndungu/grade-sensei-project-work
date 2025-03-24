@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
@@ -31,8 +30,24 @@ import { Badge } from "@/components/ui/badge";
 import { SearchIcon, Save, Download, FileText, Edit2, Filter } from "lucide-react";
 import { toast } from "sonner";
 
-// Demo student data
-const studentData = [
+type SubjectGrade = {
+  score: number;
+  grade: string;
+  status: "approved" | "pending";
+};
+
+type StudentSubjects = {
+  [key: string]: SubjectGrade;
+};
+
+type Student = {
+  id: number;
+  name: string;
+  form: string;
+  subjects: StudentSubjects;
+};
+
+const studentData: Student[] = [
   {
     id: 1,
     name: "Amina Wanjiku",
@@ -105,39 +120,36 @@ const Grades = () => {
   const [selectedSubject, setSelectedSubject] = useState("All Subjects");
   const [selectedTerm, setSelectedTerm] = useState("Term 2");
   const [editMode, setEditMode] = useState(false);
-  const [editedGrades, setEditedGrades] = useState({});
+  const [editedGrades, setEditedGrades] = useState<Record<string, SubjectGrade>>({});
 
-  // Calculate average grade for each student
-  const calculateAverage = (student) => {
+  const calculateAverage = (student: Student) => {
     const scores = Object.values(student.subjects).map((s) => s.score);
     const sum = scores.reduce((total, score) => total + score, 0);
     return (sum / scores.length).toFixed(1);
   };
 
-  // Get letter grade from numerical score
-  const getGradeFromScore = (score) => {
-    if (score >= 90) return "A";
-    if (score >= 80) return "A-";
-    if (score >= 75) return "B+";
-    if (score >= 70) return "B";
-    if (score >= 65) return "B-";
-    if (score >= 60) return "C+";
-    if (score >= 55) return "C";
-    if (score >= 50) return "C-";
-    if (score >= 45) return "D+";
-    if (score >= 40) return "D";
+  const getGradeFromScore = (score: number | string) => {
+    const numScore = typeof score === 'string' ? parseFloat(score) : score;
+    if (numScore >= 90) return "A";
+    if (numScore >= 80) return "A-";
+    if (numScore >= 75) return "B+";
+    if (numScore >= 70) return "B";
+    if (numScore >= 65) return "B-";
+    if (numScore >= 60) return "C+";
+    if (numScore >= 55) return "C";
+    if (numScore >= 50) return "C-";
+    if (numScore >= 45) return "D+";
+    if (numScore >= 40) return "D";
     return "E";
   };
 
-  // Filter students based on search term and selected form
   const filteredStudents = studentData.filter(
     (student) =>
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (selectedForm === "All Forms" || student.form === selectedForm)
   );
 
-  // Handle grade change in edit mode
-  const handleGradeChange = (studentId, subject, value) => {
+  const handleGradeChange = (studentId: number, subject: string, value: string) => {
     const newScore = parseInt(value, 10);
     if (isNaN(newScore) || newScore < 0 || newScore > 100) return;
     
@@ -146,13 +158,12 @@ const Grades = () => {
       [`${studentId}-${subject}`]: {
         score: newScore,
         grade: getGradeFromScore(newScore),
+        status: "pending"
       },
     });
   };
 
-  // Save edited grades
   const saveGrades = () => {
-    // In a real app, this would send a request to the backend
     toast.success("Grades saved successfully");
     setEditMode(false);
     setEditedGrades({});
