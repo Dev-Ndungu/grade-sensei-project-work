@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
@@ -30,7 +29,6 @@ import {
   GraduationCap,
   Users,
   Activity,
-  Award,
   BarChart2,
 } from "lucide-react";
 
