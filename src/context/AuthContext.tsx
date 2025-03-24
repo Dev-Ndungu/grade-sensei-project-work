@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -24,24 +24,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const setData = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error(error);
-        setIsLoading(false);
-        return;
-      }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    };
+      try {
+        // Skip the real authentication if Supabase is not configured
+        if (!isSupabaseConfigured()) {
+          console.warn('Supabase is not configured with real credentials. Using mock authentication flow.');
+          setIsLoading(false);
+          return;
+        }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error(error);
+          setIsLoading(false);
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setIsLoading(false);
       }
-    );
+    };
+
+    // Only set up the auth state change listener if Supabase is properly configured
+    let subscription: { unsubscribe: () => void } = { unsubscribe: () => {} };
+    
+    if (isSupabaseConfigured()) {
+      const { data } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      );
+      subscription = data.subscription;
+    }
 
     setData();
 
@@ -53,6 +71,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      
+      if (!isSupabaseConfigured()) {
+        console.warn('Using mock authentication. In a real app, this would sign in with Supabase.');
+        // Simulate successful sign in for development
+        toast.success('Signed in successfully (Development Mode)');
+        navigate('/dashboard');
+        return;
+      }
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -76,6 +103,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       setIsLoading(true);
+      
+      if (!isSupabaseConfigured()) {
+        console.warn('Using mock authentication. In a real app, this would register with Supabase.');
+        // Simulate successful registration for development
+        toast.success('Account created! (Development Mode)');
+        navigate('/');
+        return;
+      }
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -117,6 +153,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setIsLoading(true);
+      
+      if (!isSupabaseConfigured()) {
+        console.warn('Using mock authentication. In a real app, this would sign out with Supabase.');
+        // Simulate successful sign out for development
+        toast.success('Signed out successfully! (Development Mode)');
+        navigate('/');
+        return;
+      }
+      
       const { error } = await supabase.auth.signOut();
 
       if (error) {

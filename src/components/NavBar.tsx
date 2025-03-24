@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
 
 interface NavItem {
   label: string;
@@ -27,6 +28,7 @@ const NavBar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -67,11 +69,6 @@ const NavBar = () => {
     },
   ];
 
-  const handleLogout = () => {
-    // Placeholder for logout functionality
-    console.log("Logging out...");
-  };
-
   return (
     <div
       className={cn(
@@ -110,7 +107,7 @@ const NavBar = () => {
               variant="ghost"
               size="sm"
               className="gap-2 text-muted-foreground hover:text-foreground"
-              onClick={handleLogout}
+              onClick={signOut}
             >
               <LogOut size={18} />
               Logout
@@ -164,7 +161,7 @@ const NavBar = () => {
               variant="ghost"
               size="lg"
               className="w-full justify-start gap-3 text-lg text-muted-foreground hover:text-foreground animate-in-delay-4"
-              onClick={handleLogout}
+              onClick={signOut}
             >
               <LogOut size={18} />
               Logout
