@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,44 +13,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EyeIcon, EyeOffIcon, Lock, Mail } from "lucide-react";
-import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const { signIn, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    // This is where we would normally connect to a real backend
-    // For now, let's simulate a login after a short delay
-    setTimeout(() => {
-      // Simple validation
-      if (!email || !password) {
-        toast.error("Please enter both email and password");
-        setIsLoading(false);
-        return;
-      }
-
-      // For demo purposes, let's use some hardcoded credentials
-      if (email === "admin@example.com" && password === "password") {
-        toast.success("Welcome back, Administrator!");
-        navigate("/dashboard");
-      } else if (email === "teacher@example.com" && password === "password") {
-        toast.success("Welcome back, Teacher!");
-        navigate("/dashboard");
-      } else if (email === "student@example.com" && password === "password") {
-        toast.success("Welcome back, Student!");
-        navigate("/dashboard");
-      } else {
-        toast.error("Invalid credentials. Please try again.");
-      }
-      setIsLoading(false);
-    }, 1500);
+    await signIn(email, password);
   };
 
   return (
@@ -83,16 +56,12 @@ const LoginForm = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <a
-                href="#"
+              <Link
+                to="/forgot-password"
                 className="text-sm text-primary hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast.info("Password reset functionality coming soon!");
-                }}
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <div className="relative">
               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -142,21 +111,7 @@ const LoginForm = () => {
           </p>
         </div>
         <div className="text-center text-sm text-muted-foreground">
-          For demo purposes, use:
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground">
-          <div>
-            <div className="font-semibold">Admin</div>
-            <div>admin@example.com</div>
-          </div>
-          <div>
-            <div className="font-semibold">Teacher</div>
-            <div>teacher@example.com</div>
-          </div>
-          <div>
-            <div className="font-semibold">Student</div>
-            <div>student@example.com</div>
-          </div>
+          For demo purposes, create an account or contact system administrator
         </div>
       </CardFooter>
     </Card>

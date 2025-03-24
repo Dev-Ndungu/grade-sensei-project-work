@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,10 +22,10 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { Mail, Lock, User, EyeIcon, EyeOffIcon } from "lucide-react";
-import { toast } from "sonner";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/context/AuthContext";
 
 const registerSchema = z.object({
   fullName: z.string().min(3, { message: "Name must be at least 3 characters" }),
@@ -42,8 +42,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const { signUp, isLoading } = useAuth();
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -56,15 +55,7 @@ const RegisterForm = () => {
   });
 
   const onSubmit = async (values: RegisterFormValues) => {
-    setIsLoading(true);
-
-    // This is where we would normally connect to a real backend
-    // For now, let's simulate a registration after a short delay
-    setTimeout(() => {
-      toast.success("Account created successfully!");
-      navigate("/dashboard");
-      setIsLoading(false);
-    }, 1500);
+    await signUp(values.email, values.password, values.fullName);
   };
 
   return (
@@ -212,16 +203,9 @@ const RegisterForm = () => {
       <CardFooter className="relative flex justify-center border-t px-6 py-4 bg-muted/30">
         <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <a
-            href="#"
-            className="text-primary hover:underline"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/");
-            }}
-          >
+          <Link to="/" className="text-primary hover:underline">
             Sign in
-          </a>
+          </Link>
         </p>
       </CardFooter>
     </Card>
