@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -132,7 +132,15 @@ const LoginForm = () => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="relative flex flex-col space-y-2 border-t px-6 py-4 bg-muted/30">
+      <CardFooter className="relative flex flex-col space-y-4 border-t px-6 py-4 bg-muted/30">
+        <div className="text-center w-full">
+          <p className="text-sm text-muted-foreground mb-2">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-primary hover:underline">
+              Create an account
+            </Link>
+          </p>
+        </div>
         <div className="text-center text-sm text-muted-foreground">
           For demo purposes, use:
         </div>

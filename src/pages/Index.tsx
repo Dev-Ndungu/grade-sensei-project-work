@@ -15,11 +15,18 @@ const Index = () => {
         <Container>
           <div className="flex items-center justify-between">
             <Logo />
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">
-                Go to Dashboard
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link to="/register">
+                <Button variant="outline" size="sm">
+                  Create Account
+                </Button>
+              </Link>
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
         </Container>
       </header>
@@ -63,9 +70,9 @@ const Index = () => {
                       Learn More <ArrowRight size={16} />
                     </Button>
                   </a>
-                  <Link to="/dashboard">
+                  <Link to="/register">
                     <Button variant="outline" size="lg">
-                      View Demo
+                      Create Account
                     </Button>
                   </Link>
                 </div>
