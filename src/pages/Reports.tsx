@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
@@ -25,12 +24,8 @@ import {
   Printer,
   BarChart3,
   PieChart,
-  CalendarIcon,
   Filter,
-  Book,
   PlusCircle,
-  FileCheck,
-  Users,
 } from "lucide-react";
 import {
   BarChart,
@@ -56,7 +51,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import StudentDialog from "@/components/students/StudentDialog";
-import { addStudent, fetchStudents, getStudentsByForm, updateStudent } from "@/services/studentService";
+import { addStudent, fetchStudents, getStudentsByForm, updateStudent, fetchStudentGrades } from "@/services/studentService";
 import { Student, StudentGrade } from "@/types/student";
 import { forms, terms } from "@/types/grades";
 import { generateClassReport, generateStudentReport } from "@/services/reportService";
@@ -76,7 +71,7 @@ const Reports = () => {
   const [selectedClass, setSelectedClass] = useState("Form 3");
   const [selectedType, setSelectedType] = useState("All Types");
   const [selectedPeriod, setSelectedPeriod] = useState("Term 2");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(2025);
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,16 +103,25 @@ const Reports = () => {
   // Filter students by form/class
   useEffect(() => {
     const filterStudents = async () => {
-      if (selectedClass === "All Forms") {
-        setFilteredStudents(students);
-      } else {
-        const filteredByForm = students.filter(student => student.form === selectedClass);
-        setFilteredStudents(filteredByForm);
+      try {
+        if (selectedClass === "All Forms") {
+          setFilteredStudents(students.filter(student => 
+            student.name.toLowerCase().includes(searchTerm.toLowerCase())
+          ));
+        } else {
+          const filteredByForm = students.filter(student => 
+            student.form === selectedClass &&
+            student.name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setFilteredStudents(filteredByForm);
+        }
+      } catch (error) {
+        console.error("Error filtering students:", error);
       }
     };
 
     filterStudents();
-  }, [selectedClass, students]);
+  }, [selectedClass, students, searchTerm]);
 
   // Handle student form submission
   const handleStudentSubmit = async (values: any) => {
@@ -153,22 +157,7 @@ const Reports = () => {
 
   // Handle search
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearchTerm(value);
-    
-    if (!value.trim()) {
-      setFilteredStudents(students.filter(s => s.form === selectedClass || selectedClass === "All Forms"));
-      return;
-    }
-    
-    const filtered = students.filter(student => {
-      const matchesSearch = student.name.toLowerCase().includes(value.toLowerCase()) || 
-                            (student.admission_number && student.admission_number.toLowerCase().includes(value.toLowerCase()));
-      const matchesClass = student.form === selectedClass || selectedClass === "All Forms";
-      return matchesSearch && matchesClass;
-    });
-    
-    setFilteredStudents(filtered);
+    setSearchTerm(event.target.value);
   };
 
   // Handle generate report
@@ -192,17 +181,10 @@ const Reports = () => {
     toast.loading("Generating student report...");
     
     try {
-      // In a real application, you would fetch actual grades from the database
-      // For now, we'll use sample data
-      const sampleGrades: StudentGrade[] = [
-        { id: '1', student_id: student.id, subject: 'Mathematics', term: selectedPeriod, year: selectedYear, score: 85, grade: 'A-', status: 'approved', created_at: '', updated_at: '' },
-        { id: '2', student_id: student.id, subject: 'English', term: selectedPeriod, year: selectedYear, score: 76, grade: 'B+', status: 'approved', created_at: '', updated_at: '' },
-        { id: '3', student_id: student.id, subject: 'Physics', term: selectedPeriod, year: selectedYear, score: 68, grade: 'B-', status: 'approved', created_at: '', updated_at: '' },
-        { id: '4', student_id: student.id, subject: 'Chemistry', term: selectedPeriod, year: selectedYear, score: 72, grade: 'B+', status: 'approved', created_at: '', updated_at: '' },
-        { id: '5', student_id: student.id, subject: 'Biology', term: selectedPeriod, year: selectedYear, score: 65, grade: 'C+', status: 'approved', created_at: '', updated_at: '' },
-      ];
+      // Fetch the actual grades from the database
+      const grades = await fetchStudentGrades(student.id);
       
-      const doc = generateStudentReport(student, sampleGrades, selectedPeriod, selectedYear);
+      const doc = generateStudentReport(student, grades, selectedPeriod, selectedYear);
       
       // Download the PDF
       doc.save(`${student.name}_${selectedPeriod}_${selectedYear}_Report.pdf`);
@@ -228,30 +210,14 @@ const Reports = () => {
       // Get students for the selected class
       const classStudents = await getStudentsByForm(selectedClass);
       
-      // In a real application, you would fetch actual grades from the database
-      // For now, we'll use sample data
-      const sampleGrades: StudentGrade[] = [];
+      // For each student, fetch their grades
+      const gradesPromises = classStudents.map(student => fetchStudentGrades(student.id));
+      const allGradesResults = await Promise.all(gradesPromises);
       
-      // Generate random grades for each student
-      classStudents.forEach(student => {
-        const subjects = ['Mathematics', 'English', 'Physics', 'Chemistry', 'Biology'];
-        subjects.forEach(subject => {
-          sampleGrades.push({
-            id: `${student.id}-${subject}`,
-            student_id: student.id,
-            subject,
-            term: selectedPeriod,
-            year: selectedYear,
-            score: Math.floor(Math.random() * 40) + 60, // Random score between 60-100
-            grade: '',  // This will be calculated by the report generator
-            status: 'approved',
-            created_at: '',
-            updated_at: ''
-          });
-        });
-      });
+      // Flatten the array of grade arrays
+      const allGrades = allGradesResults.flat();
       
-      const doc = generateClassReport(selectedClass, classStudents, sampleGrades, selectedPeriod, selectedYear);
+      const doc = generateClassReport(selectedClass, classStudents, allGrades, selectedPeriod, selectedYear);
       
       // Download the PDF
       doc.save(`${selectedClass}_${selectedPeriod}_${selectedYear}_Report.pdf`);

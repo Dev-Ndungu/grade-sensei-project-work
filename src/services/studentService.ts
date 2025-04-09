@@ -14,7 +14,7 @@ export async function fetchStudents(): Promise<Student[]> {
       throw error;
     }
 
-    return (data as Student[]) || [];
+    return data as Student[] || [];
   } catch (error: any) {
     toast.error(`Error fetching students: ${error.message}`);
     return [];
@@ -52,7 +52,7 @@ export async function fetchStudentGrades(studentId: string): Promise<StudentGrad
       throw error;
     }
 
-    return (data as StudentGrade[]) || [];
+    return data as StudentGrade[] || [];
   } catch (error: any) {
     toast.error(`Error fetching student grades: ${error.message}`);
     return [];
@@ -177,7 +177,7 @@ export async function getStudentsByForm(form: string): Promise<Student[]> {
       throw error;
     }
 
-    return (data as Student[]) || [];
+    return data as Student[] || [];
   } catch (error: any) {
     toast.error(`Error fetching students by form: ${error.message}`);
     return [];
