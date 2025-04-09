@@ -76,7 +76,7 @@ const Grades = () => {
     
     setEditedGrades({
       ...editedGrades,
-      `${studentId}-${subject}`: {
+      [`${studentId}-${subject}`]: {
         score: newScore,
         grade: getGradeFromScore(newScore),
         status: "pending"
