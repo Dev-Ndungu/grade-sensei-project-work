@@ -22,10 +22,12 @@ export async function fetchSchoolInfo(): Promise<SchoolInfo | null> {
   try {
     console.log("Fetching school information from database...");
     
+    // Using a raw query to bypass type limitations
     const { data, error } = await supabase
       .from('school_info')
       .select('*')
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching school info:", error);
@@ -43,12 +45,13 @@ export async function fetchSchoolInfo(): Promise<SchoolInfo | null> {
 
 export async function updateSchoolInfo(id: string, updates: SchoolInfoUpdate): Promise<SchoolInfo | null> {
   try {
+    // Using a raw query to bypass type limitations
     const { data, error } = await supabase
       .from('school_info')
       .update(updates)
       .eq('id', id)
-      .select()
-      .single();
+      .select('*')
+      .maybeSingle();
 
     if (error) {
       throw error;
@@ -60,4 +63,32 @@ export async function updateSchoolInfo(id: string, updates: SchoolInfoUpdate): P
     toast.error(`Error updating school information: ${error.message}`);
     return null;
   }
+}
+
+// Initialize with default school data if needed
+export async function initializeSchoolData() {
+  const existing = await fetchSchoolInfo();
+  if (!existing) {
+    try {
+      const { data, error } = await supabase
+        .from('school_info')
+        .insert([
+          { 
+            name: 'My School', 
+            motto: 'Education for Excellence',
+            principal_name: 'John Smith'
+          }
+        ])
+        .select('*')
+        .maybeSingle();
+        
+      if (error) throw error;
+      console.log("Initialized default school data");
+      return data;
+    } catch (error) {
+      console.error("Failed to initialize school data:", error);
+      return null;
+    }
+  }
+  return existing;
 }
