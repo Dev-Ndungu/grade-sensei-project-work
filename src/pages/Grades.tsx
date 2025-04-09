@@ -11,15 +11,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, Download, Edit2 } from "lucide-react";
+import { Save, Download, Edit2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { SubjectGrade } from "@/types/grades";
 import { getGradeFromScore } from "@/utils/gradeUtils";
 import GradeFilters from "@/components/grades/GradeFilters";
 import GradesTable from "@/components/grades/GradesTable";
+import AddStudentGradeForm from "@/components/grades/AddStudentGradeForm";
 import { fetchStudents, addOrUpdateGrade, getStudentGradesByTerm } from "@/services/studentService";
 import { Student, StudentGrade } from "@/types/student";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // Helper function to convert database student to format needed by GradesTable
 const mapStudentForGradesTable = (
@@ -71,25 +79,27 @@ const Grades = () => {
   }[]>([]);
   const [grades, setGrades] = useState<StudentGrade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Function to load data
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const studentsData = await fetchStudents();
+      setStudents(studentsData);
+      
+      // Fetch grades for the selected term and year
+      const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
+      setGrades(gradesData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Fetch students and grades on component mount
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const studentsData = await fetchStudents();
-        setStudents(studentsData);
-        
-        // Fetch grades for the selected term and year
-        const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
-        setGrades(gradesData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user) {
       loadData();
     }
@@ -165,6 +175,12 @@ const Grades = () => {
     }
   };
 
+  const handleStudentAdded = () => {
+    // Reload data after a new student is added
+    loadData();
+    setShowAddForm(false);
+  };
+
   return (
     <div className="min-h-screen pb-20">
       <NavBar />
@@ -179,6 +195,23 @@ const Grades = () => {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Sheet open={showAddForm} onOpenChange={setShowAddForm}>
+                  <SheetTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus size={16} />
+                      Add Student
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-full max-w-md sm:max-w-lg overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>Add New Student</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <AddStudentGradeForm onSuccess={handleStudentAdded} />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                
                 <Button
                   variant={editMode ? "outline" : "default"}
                   className="gap-2"
@@ -254,4 +287,3 @@ const Grades = () => {
 };
 
 export default Grades;
-

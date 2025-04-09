@@ -169,4 +169,3 @@ const GradesTable: React.FC<GradesTableProps> = ({
 };
 
 export default GradesTable;
-
