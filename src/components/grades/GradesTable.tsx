@@ -78,6 +78,15 @@ const GradesTable: React.FC<GradesTableProps> = ({
     }
   });
 
+  // Check if we have any students to display
+  if (students.length === 0) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        No student records found. Please add students or adjust your filters.
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border overflow-hidden">
       <Table>
