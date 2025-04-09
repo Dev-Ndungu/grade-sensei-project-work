@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
@@ -30,7 +29,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-// Helper function to convert database student to format needed by GradesTable
 const mapStudentForGradesTable = (
   student: Student, 
   grades: StudentGrade[]
@@ -42,7 +40,6 @@ const mapStudentForGradesTable = (
 } => {
   const studentSubjects: Record<string, SubjectGrade> = {};
   
-  // Initialize with empty values if no grades exist
   grades.forEach(grade => {
     if (grade.student_id === student.id) {
       studentSubjects[grade.subject] = {
@@ -82,7 +79,6 @@ const Grades = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // Function to load data
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -91,7 +87,6 @@ const Grades = () => {
       console.log("Fetched students:", studentsData);
       setStudents(studentsData);
       
-      // Fetch grades for the selected term and year
       const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
       console.log("Fetched grades:", gradesData);
       setGrades(gradesData);
@@ -103,12 +98,10 @@ const Grades = () => {
     }
   };
 
-  // Fetch students and grades on component mount and when term/year changes
   useEffect(() => {
     loadData();
   }, [selectedTerm, selectedYear]);
 
-  // Filter students whenever the selectedForm or searchTerm changes
   useEffect(() => {
     let filtered = students;
     
@@ -125,7 +118,6 @@ const Grades = () => {
     setFilteredStudents(filtered);
   }, [students, selectedForm, searchTerm]);
 
-  // Map students to the format needed by GradesTable
   useEffect(() => {
     const mapped = filteredStudents.map(student => 
       mapStudentForGradesTable(student, grades)
@@ -167,7 +159,6 @@ const Grades = () => {
       await Promise.all(savePromises);
       toast.success("All grades saved successfully");
       
-      // Refresh grades data
       const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
       setGrades(gradesData);
       
@@ -180,7 +171,6 @@ const Grades = () => {
   };
 
   const handleStudentAdded = () => {
-    // Reload data after a new student is added
     loadData();
     setShowAddForm(false);
     toast.success("Student added successfully");
@@ -192,11 +182,11 @@ const Grades = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 w-full">
       <NavBar />
-      <div className="pt-24 pb-16">
-        <Container>
-          <div className="mb-8 animate-slide-down">
+      <div className="pt-20 pb-16 w-full">
+        <Container fluid>
+          <div className="px-4 md:px-6 mb-8 animate-slide-down">
             <div className="flex justify-between items-center gap-4 flex-wrap">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Grade Management</h1>
@@ -252,7 +242,7 @@ const Grades = () => {
             </div>
           </div>
 
-          <Card className="overflow-hidden animate-fade-in">
+          <Card className="overflow-hidden animate-fade-in mx-4 md:mx-6">
             <CardHeader className="pb-4">
               <CardTitle>Student Grades</CardTitle>
               <CardDescription>
