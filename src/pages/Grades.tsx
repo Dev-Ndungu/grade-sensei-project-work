@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, Download, Edit2, Plus, X } from "lucide-react";
+import { Save, Download, Edit2, Plus, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SubjectGrade } from "@/types/grades";
 import { getGradeFromScore } from "@/utils/gradeUtils";
@@ -186,6 +186,11 @@ const Grades = () => {
     toast.success("Student added successfully");
   };
 
+  const handleRefresh = () => {
+    loadData();
+    toast.success("Data refreshed");
+  };
+
   return (
     <div className="min-h-screen pb-20">
       <NavBar />
@@ -200,6 +205,11 @@ const Grades = () => {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button className="gap-2" onClick={handleRefresh}>
+                  <RefreshCw size={16} />
+                  Refresh Data
+                </Button>
+                
                 <Sheet open={showAddForm} onOpenChange={setShowAddForm}>
                   <SheetTrigger asChild>
                     <Button className="gap-2">

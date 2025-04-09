@@ -69,6 +69,8 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
+      console.log("Submitting form with values:", values);
+      console.log("Subject scores:", subjectScores);
 
       // Check if at least one subject has a score
       if (Object.keys(subjectScores).length === 0) {
@@ -78,6 +80,13 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
       }
 
       // Step 1: Add the student
+      console.log("Adding student with data:", {
+        name: values.name,
+        form: values.form,
+        admission_number: values.admission_number || null,
+        user_id: null, // Make this explicitly null
+      });
+      
       const studentResult = await addStudent({
         name: values.name,
         form: values.form,
@@ -95,7 +104,7 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
 
       // Step 2: Add grades for each subject
       const gradePromises = Object.entries(subjectScores).map(([subject, score]) => {
-        return addOrUpdateGrade({
+        const gradeData = {
           student_id: studentResult.id,
           subject,
           term: values.term,
@@ -103,7 +112,9 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
           score,
           grade: getGradeFromScore(score),
           status: "pending",
-        });
+        };
+        console.log("Adding grade:", gradeData);
+        return addOrUpdateGrade(gradeData);
       });
 
       await Promise.all(gradePromises);
@@ -116,16 +127,16 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
       onSuccess();
     } catch (error: any) {
       console.error("Error adding student and grades:", error);
-      toast.error("An error occurred while adding student and grades");
+      toast.error(`An error occurred while adding student and grades: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Group subjects into rows of 4 for better layout
+  // Group subjects into rows of 3 for better layout
   const subjectRows = [];
-  for (let i = 0; i < subjects.length; i += 4) {
-    subjectRows.push(subjects.slice(i, i + 4));
+  for (let i = 0; i < subjects.length; i += 3) {
+    subjectRows.push(subjects.slice(i, i + 3));
   }
 
   return (
@@ -233,7 +244,7 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
           <div className="border-t pt-4 mt-4">
             <h4 className="font-medium mb-3">Subject Grades</h4>
             {subjectRows.map((row, rowIndex) => (
-              <div key={`row-${rowIndex}`} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div key={`row-${rowIndex}`} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {row.map((subject) => (
                   <div key={subject} className="space-y-2">
                     <label className="text-sm font-medium">{subject}</label>

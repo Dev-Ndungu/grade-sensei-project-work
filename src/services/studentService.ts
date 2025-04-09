@@ -5,6 +5,9 @@ import { Student, StudentInsert, StudentGrade, StudentGradeInsert } from "@/type
 
 export async function fetchStudents(): Promise<Student[]> {
   try {
+    console.log("Fetching students from database...");
+    
+    // First try to fetch without auth, as we've now added RLS policies that allow access
     const { data, error } = await supabase
       .from('students')
       .select('*')
@@ -15,6 +18,7 @@ export async function fetchStudents(): Promise<Student[]> {
       throw error;
     }
 
+    console.log("Successfully fetched students:", data);
     return data as Student[] || [];
   } catch (error: any) {
     console.error("Error in fetchStudents:", error);
@@ -204,6 +208,8 @@ export async function getStudentsByForm(form: string): Promise<Student[]> {
 
 export async function getStudentGradesByTerm(term: string, year: number): Promise<StudentGrade[]> {
   try {
+    console.log(`Fetching grades for term: ${term}, year: ${year}`);
+    
     const { data, error } = await supabase
       .from('student_grades')
       .select('*')
@@ -215,6 +221,7 @@ export async function getStudentGradesByTerm(term: string, year: number): Promis
       throw error;
     }
 
+    console.log(`Successfully fetched ${data?.length || 0} grades`);
     return data as StudentGrade[] || [];
   } catch (error: any) {
     console.error("Error in getStudentGradesByTerm:", error);
