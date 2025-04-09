@@ -82,7 +82,7 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
         name: values.name,
         form: values.form,
         admission_number: values.admission_number || null,
-        user_id: "", // This field is nullable now
+        user_id: null, // Make this explicitly null
       });
 
       if (!studentResult) {
@@ -90,6 +90,8 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
         setIsSubmitting(false);
         return;
       }
+
+      console.log("Student added:", studentResult);
 
       // Step 2: Add grades for each subject
       const gradePromises = Object.entries(subjectScores).map(([subject, score]) => {
@@ -105,19 +107,26 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
       });
 
       await Promise.all(gradePromises);
+      console.log("Grades added successfully");
       
       // Reset form and notify success
       form.reset();
       setSubjectScores({});
       toast.success("Student and grades added successfully");
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error adding student and grades:", error);
       toast.error("An error occurred while adding student and grades");
-      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Group subjects into rows of 4 for better layout
+  const subjectRows = [];
+  for (let i = 0; i < subjects.length; i += 4) {
+    subjectRows.push(subjects.slice(i, i + 4));
+  }
 
   return (
     <div className="space-y-6 p-6 border rounded-lg bg-background">
@@ -223,27 +232,29 @@ const AddStudentGradeForm: React.FC<AddStudentGradeFormProps> = ({ onSuccess }) 
 
           <div className="border-t pt-4 mt-4">
             <h4 className="font-medium mb-3">Subject Grades</h4>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {subjects.map((subject) => (
-                <div key={subject} className="space-y-2">
-                  <label className="text-sm font-medium">{subject}</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="Score"
-                    value={subjectScores[subject] || ""}
-                    onChange={(e) => handleScoreChange(subject, e.target.value)}
-                    className="w-full"
-                  />
-                  {subjectScores[subject] !== undefined && (
-                    <div className="text-xs font-medium text-muted-foreground">
-                      Grade: {getGradeFromScore(subjectScores[subject])}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            {subjectRows.map((row, rowIndex) => (
+              <div key={`row-${rowIndex}`} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                {row.map((subject) => (
+                  <div key={subject} className="space-y-2">
+                    <label className="text-sm font-medium">{subject}</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Score"
+                      value={subjectScores[subject] || ""}
+                      onChange={(e) => handleScoreChange(subject, e.target.value)}
+                      className="w-full"
+                    />
+                    {subjectScores[subject] !== undefined && (
+                      <div className="text-xs font-medium text-muted-foreground">
+                        Grade: {getGradeFromScore(subjectScores[subject])}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
 
           <div className="flex justify-end">

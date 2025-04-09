@@ -24,6 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -63,7 +64,7 @@ const mapStudentForGradesTable = (
 const Grades = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedForm, setSelectedForm] = useState("Form 3");
+  const [selectedForm, setSelectedForm] = useState("All Forms");
   const [selectedSubject, setSelectedSubject] = useState("All Subjects");
   const [selectedTerm, setSelectedTerm] = useState("Term 2");
   const [selectedYear, setSelectedYear] = useState(2025);
@@ -85,25 +86,27 @@ const Grades = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching students and grades data...");
       const studentsData = await fetchStudents();
+      console.log("Fetched students:", studentsData);
       setStudents(studentsData);
       
       // Fetch grades for the selected term and year
       const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
+      console.log("Fetched grades:", gradesData);
       setGrades(gradesData);
     } catch (error) {
       console.error("Error loading data:", error);
+      toast.error("Failed to load students or grades");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fetch students and grades on component mount
+  // Fetch students and grades on component mount and when term/year changes
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user, selectedTerm, selectedYear]);
+    loadData();
+  }, [selectedTerm, selectedYear]);
 
   // Filter students whenever the selectedForm or searchTerm changes
   useEffect(() => {
@@ -128,6 +131,7 @@ const Grades = () => {
       mapStudentForGradesTable(student, grades)
     );
     setMappedStudents(mapped);
+    console.log("Mapped students for grades table:", mapped);
   }, [filteredStudents, grades]);
 
   const handleGradeChange = (studentId: string, subject: string, value: string) => {
@@ -179,6 +183,7 @@ const Grades = () => {
     // Reload data after a new student is added
     loadData();
     setShowAddForm(false);
+    toast.success("Student added successfully");
   };
 
   return (
@@ -205,6 +210,9 @@ const Grades = () => {
                   <SheetContent className="w-full max-w-md sm:max-w-lg overflow-y-auto">
                     <SheetHeader>
                       <SheetTitle>Add New Student</SheetTitle>
+                      <SheetDescription>
+                        Add a new student with grades for all subjects
+                      </SheetDescription>
                     </SheetHeader>
                     <div className="mt-6">
                       <AddStudentGradeForm onSuccess={handleStudentAdded} />
@@ -238,7 +246,7 @@ const Grades = () => {
             <CardHeader className="pb-4">
               <CardTitle>Student Grades</CardTitle>
               <CardDescription>
-                {selectedTerm} academic performance for {selectedForm}
+                {selectedTerm} academic performance for {selectedForm === "All Forms" ? "all forms" : selectedForm}
               </CardDescription>
             </CardHeader>
             <CardContent>

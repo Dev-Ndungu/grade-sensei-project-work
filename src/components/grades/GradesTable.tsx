@@ -13,6 +13,7 @@ import GradeCell from "./GradeCell";
 import { calculateAverage, getGradeFromScore } from "@/utils/gradeUtils";
 import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { subjects } from "@/types/grades";
 
 interface GradeTableStudent {
   id: string;
@@ -40,15 +41,8 @@ const GradesTable: React.FC<GradesTableProps> = ({
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
-  // Extract subjects from the first student that has any
-  const subjectsArray = React.useMemo(() => {
-    for (const student of students) {
-      if (student.subjects && Object.keys(student.subjects).length > 0) {
-        return Object.keys(student.subjects);
-      }
-    }
-    return ["Mathematics", "English", "Physics", "Chemistry", "Biology"];
-  }, [students]);
+  // Use the subjects from the types file
+  const subjectsArray = subjects;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -88,11 +82,11 @@ const GradesTable: React.FC<GradesTableProps> = ({
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-md border overflow-hidden overflow-x-auto">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="w-[200px]">
+            <TableHead className="w-[200px] sticky left-0 bg-muted/50">
               <Button 
                 variant="ghost" 
                 className="p-0 h-auto font-medium hover:bg-transparent flex items-center gap-1"
@@ -107,7 +101,7 @@ const GradesTable: React.FC<GradesTableProps> = ({
               </Button>
             </TableHead>
             {subjectsArray.map((subject) => (
-              <TableHead key={subject} className="text-center">
+              <TableHead key={subject} className="text-center min-w-[120px]">
                 <Button 
                   variant="ghost" 
                   className="p-0 h-auto font-medium hover:bg-transparent flex items-center justify-center gap-1 w-full"
@@ -122,7 +116,7 @@ const GradesTable: React.FC<GradesTableProps> = ({
                 </Button>
               </TableHead>
             ))}
-            <TableHead className="text-center">
+            <TableHead className="text-center min-w-[120px]">
               <Button 
                 variant="ghost" 
                 className="p-0 h-auto font-medium hover:bg-transparent flex items-center justify-center gap-1 w-full"
@@ -141,8 +135,11 @@ const GradesTable: React.FC<GradesTableProps> = ({
         <TableBody>
           {sortedStudents.map((student) => (
             <TableRow key={student.id}>
-              <TableCell className="font-medium">
+              <TableCell className="font-medium sticky left-0 bg-background">
                 {student.name}
+                <div className="text-xs text-muted-foreground">
+                  {student.form}
+                </div>
               </TableCell>
               {subjectsArray.map((subject) => {
                 const originalGrade = student.subjects[subject] || { score: 0, grade: "N/A", status: "pending" };
@@ -150,7 +147,7 @@ const GradesTable: React.FC<GradesTableProps> = ({
                 const currentGrade = editedGrade || originalGrade;
                 
                 return (
-                  <TableCell key={subject}>
+                  <TableCell key={subject} className="text-center">
                     <GradeCell 
                       grade={currentGrade} 
                       editMode={editMode}

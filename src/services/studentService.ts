@@ -11,11 +11,13 @@ export async function fetchStudents(): Promise<Student[]> {
       .order('name');
 
     if (error) {
+      console.error("Error fetching students:", error);
       throw error;
     }
 
     return data as Student[] || [];
   } catch (error: any) {
+    console.error("Error in fetchStudents:", error);
     toast.error(`Error fetching students: ${error.message}`);
     return [];
   }
@@ -61,19 +63,26 @@ export async function fetchStudentGrades(studentId: string): Promise<StudentGrad
 
 export async function addStudent(student: StudentInsert): Promise<Student | null> {
   try {
+    console.log("Adding student:", student);
+    
     const { data, error } = await supabase
       .from('students')
       .insert([student])
-      .select()
-      .single();
+      .select();
 
     if (error) {
+      console.error("Error from Supabase when adding student:", error);
       throw error;
     }
 
-    toast.success("Student added successfully");
-    return data as Student;
+    if (!data || data.length === 0) {
+      throw new Error("No data returned from student insert");
+    }
+
+    console.log("Student added successfully:", data[0]);
+    return data[0] as Student;
   } catch (error: any) {
+    console.error("Error in addStudent function:", error);
     toast.error(`Error adding student: ${error.message}`);
     return null;
   }
@@ -121,6 +130,8 @@ export async function deleteStudent(id: string): Promise<boolean> {
 
 export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<StudentGrade | null> {
   try {
+    console.log("Adding/updating grade:", grade);
+    
     // Check if grade exists
     const { data: existing } = await supabase
       .from('student_grades')
@@ -142,9 +153,12 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating grade:", error);
+        throw error;
+      }
       result = data;
-      toast.success("Grade updated successfully");
+      console.log("Grade updated successfully:", result);
     } else {
       // Insert new grade
       const { data, error } = await supabase
@@ -153,13 +167,17 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting grade:", error);
+        throw error;
+      }
       result = data;
-      toast.success("Grade added successfully");
+      console.log("Grade added successfully:", result);
     }
 
     return result as StudentGrade;
   } catch (error: any) {
+    console.error("Error in addOrUpdateGrade function:", error);
     toast.error(`Error saving grade: ${error.message}`);
     return null;
   }
@@ -184,20 +202,22 @@ export async function getStudentsByForm(form: string): Promise<Student[]> {
   }
 }
 
-export async function getStudentGradesByTerm(term: string, year: number): Promise<any[]> {
+export async function getStudentGradesByTerm(term: string, year: number): Promise<StudentGrade[]> {
   try {
     const { data, error } = await supabase
       .from('student_grades')
-      .select('*, students(name, form)')
+      .select('*')
       .eq('term', term)
       .eq('year', year);
 
     if (error) {
+      console.error("Error fetching grades by term:", error);
       throw error;
     }
 
-    return data || [];
+    return data as StudentGrade[] || [];
   } catch (error: any) {
+    console.error("Error in getStudentGradesByTerm:", error);
     toast.error(`Error fetching grades by term: ${error.message}`);
     return [];
   }
