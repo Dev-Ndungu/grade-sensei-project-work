@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
 import {
@@ -25,9 +25,12 @@ import {
   Printer,
   BarChart3,
   PieChart,
-  Calendar,
+  CalendarIcon,
   Filter,
   Book,
+  PlusCircle,
+  FileCheck,
+  Users,
 } from "lucide-react";
 import {
   BarChart,
@@ -35,7 +38,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Legend,
   PieChart as RechartsPie,
@@ -43,26 +46,23 @@ import {
   Cell,
 } from "recharts";
 import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import StudentDialog from "@/components/students/StudentDialog";
+import { addStudent, fetchStudents, getStudentsByForm, updateStudent } from "@/services/studentService";
+import { Student, StudentGrade } from "@/types/student";
+import { forms, terms } from "@/types/grades";
+import { generateClassReport, generateStudentReport } from "@/services/reportService";
+import { useAuth } from "@/context/AuthContext";
 
 // Sample data for demonstration
-const classPerformance = [
-  { name: "Form 1", average: 76 },
-  { name: "Form 2", average: 72 },
-  { name: "Form 3", average: 68 },
-  { name: "Form 4", average: 74 },
-];
-
-const subjectPerformance = [
-  { name: "Mathematics", average: 65 },
-  { name: "English", average: 72 },
-  { name: "Physics", average: 68 },
-  { name: "Chemistry", average: 70 },
-  { name: "Biology", average: 74 },
-  { name: "History", average: 78 },
-  { name: "Geography", average: 73 },
-  { name: "Computer Studies", average: 82 },
-];
-
 const gradeDistribution = [
   { name: "A", value: 15, color: "#10b981" },
   { name: "B", value: 30, color: "#3b82f6" },
@@ -71,60 +71,197 @@ const gradeDistribution = [
   { name: "E", value: 5, color: "#6b7280" },
 ];
 
-const reports = [
-  {
-    id: 1,
-    title: "End of Term 2 Report",
-    type: "Individual",
-    target: "Amina Wanjiku",
-    date: "July 15, 2023",
-    status: "complete",
-  },
-  {
-    id: 2,
-    title: "Form 4 Physics Performance",
-    type: "Subject",
-    target: "Form 4",
-    date: "July 12, 2023",
-    status: "complete",
-  },
-  {
-    id: 3,
-    title: "School Performance Analysis",
-    type: "School",
-    target: "All Classes",
-    date: "July 10, 2023",
-    status: "complete",
-  },
-  {
-    id: 4,
-    title: "Mid-Term Progress Report",
-    type: "Individual",
-    target: "David Ochieng",
-    date: "June 28, 2023",
-    status: "complete",
-  },
-  {
-    id: 5,
-    title: "Form 3 Class Analysis",
-    type: "Class",
-    target: "Form 3",
-    date: "June 25, 2023",
-    status: "complete",
-  },
-];
-
 const Reports = () => {
-  const [selectedClass, setSelectedClass] = useState("All Classes");
+  const { user } = useAuth();
+  const [selectedClass, setSelectedClass] = useState("Form 3");
   const [selectedType, setSelectedType] = useState("All Types");
-  const [selectedPeriod, setSelectedPeriod] = useState("Term 2, 2023");
+  const [selectedPeriod, setSelectedPeriod] = useState("Term 2");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [students, setStudents] = useState<Student[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isStudentDialogOpen, setIsStudentDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
-  const handleGenerateReport = () => {
-    toast.success("Report generation started. You will be notified when it's ready.");
+  // Load student data
+  useEffect(() => {
+    const loadStudents = async () => {
+      setIsDataLoading(true);
+      try {
+        const data = await fetchStudents();
+        setStudents(data);
+        setFilteredStudents(data);
+      } catch (error) {
+        console.error("Error loading students:", error);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+
+    if (user) {
+      loadStudents();
+    }
+  }, [user]);
+
+  // Filter students by form/class
+  useEffect(() => {
+    const filterStudents = async () => {
+      if (selectedClass === "All Forms") {
+        setFilteredStudents(students);
+      } else {
+        const filteredByForm = students.filter(student => student.form === selectedClass);
+        setFilteredStudents(filteredByForm);
+      }
+    };
+
+    filterStudents();
+  }, [selectedClass, students]);
+
+  // Handle student form submission
+  const handleStudentSubmit = async (values: any) => {
+    setIsLoading(true);
+    try {
+      if (selectedStudent) {
+        // Update existing student
+        await updateStudent(selectedStudent.id, {
+          ...values,
+          user_id: user!.id,
+        });
+      } else {
+        // Add new student
+        await addStudent({
+          ...values,
+          user_id: user!.id,
+        });
+      }
+      
+      // Reload students
+      const updatedStudents = await fetchStudents();
+      setStudents(updatedStudents);
+      
+      // Close dialog
+      setIsStudentDialogOpen(false);
+      setSelectedStudent(undefined);
+    } catch (error) {
+      console.error("Error saving student:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDownloadReport = (id: number) => {
-    toast.success("Report downloaded successfully");
+  // Handle search
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    
+    if (!value.trim()) {
+      setFilteredStudents(students.filter(s => s.form === selectedClass || selectedClass === "All Forms"));
+      return;
+    }
+    
+    const filtered = students.filter(student => {
+      const matchesSearch = student.name.toLowerCase().includes(value.toLowerCase()) || 
+                            (student.admission_number && student.admission_number.toLowerCase().includes(value.toLowerCase()));
+      const matchesClass = student.form === selectedClass || selectedClass === "All Forms";
+      return matchesSearch && matchesClass;
+    });
+    
+    setFilteredStudents(filtered);
+  };
+
+  // Handle generate report
+  const handleGenerateReport = () => {
+    if (selectedClass === "All Forms") {
+      toast.error("Please select a specific class for report generation");
+      return;
+    }
+    
+    toast.success("Report generation started. You will be notified when it's ready.");
+    
+    // In a real application, you would fetch actual data from the database
+    // and generate the report using the reportService
+    setTimeout(() => {
+      toast.success("Report generated successfully");
+    }, 2000);
+  };
+
+  // Generate and download student report
+  const handleGenerateStudentReport = async (student: Student) => {
+    toast.loading("Generating student report...");
+    
+    try {
+      // In a real application, you would fetch actual grades from the database
+      // For now, we'll use sample data
+      const sampleGrades: StudentGrade[] = [
+        { id: '1', student_id: student.id, subject: 'Mathematics', term: selectedPeriod, year: selectedYear, score: 85, grade: 'A-', status: 'approved', created_at: '', updated_at: '' },
+        { id: '2', student_id: student.id, subject: 'English', term: selectedPeriod, year: selectedYear, score: 76, grade: 'B+', status: 'approved', created_at: '', updated_at: '' },
+        { id: '3', student_id: student.id, subject: 'Physics', term: selectedPeriod, year: selectedYear, score: 68, grade: 'B-', status: 'approved', created_at: '', updated_at: '' },
+        { id: '4', student_id: student.id, subject: 'Chemistry', term: selectedPeriod, year: selectedYear, score: 72, grade: 'B+', status: 'approved', created_at: '', updated_at: '' },
+        { id: '5', student_id: student.id, subject: 'Biology', term: selectedPeriod, year: selectedYear, score: 65, grade: 'C+', status: 'approved', created_at: '', updated_at: '' },
+      ];
+      
+      const doc = generateStudentReport(student, sampleGrades, selectedPeriod, selectedYear);
+      
+      // Download the PDF
+      doc.save(`${student.name}_${selectedPeriod}_${selectedYear}_Report.pdf`);
+      toast.dismiss();
+      toast.success("Student report downloaded successfully");
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Error generating report");
+      console.error("Error generating report:", error);
+    }
+  };
+
+  // Generate and download class report
+  const handleGenerateClassReport = async () => {
+    if (selectedClass === "All Forms") {
+      toast.error("Please select a specific class for report generation");
+      return;
+    }
+    
+    toast.loading("Generating class report...");
+    
+    try {
+      // Get students for the selected class
+      const classStudents = await getStudentsByForm(selectedClass);
+      
+      // In a real application, you would fetch actual grades from the database
+      // For now, we'll use sample data
+      const sampleGrades: StudentGrade[] = [];
+      
+      // Generate random grades for each student
+      classStudents.forEach(student => {
+        const subjects = ['Mathematics', 'English', 'Physics', 'Chemistry', 'Biology'];
+        subjects.forEach(subject => {
+          sampleGrades.push({
+            id: `${student.id}-${subject}`,
+            student_id: student.id,
+            subject,
+            term: selectedPeriod,
+            year: selectedYear,
+            score: Math.floor(Math.random() * 40) + 60, // Random score between 60-100
+            grade: '',  // This will be calculated by the report generator
+            status: 'approved',
+            created_at: '',
+            updated_at: ''
+          });
+        });
+      });
+      
+      const doc = generateClassReport(selectedClass, classStudents, sampleGrades, selectedPeriod, selectedYear);
+      
+      // Download the PDF
+      doc.save(`${selectedClass}_${selectedPeriod}_${selectedYear}_Report.pdf`);
+      toast.dismiss();
+      toast.success("Class report downloaded successfully");
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Error generating report");
+      console.error("Error generating report:", error);
+    }
   };
 
   return (
@@ -142,7 +279,7 @@ const Reports = () => {
           <Tabs defaultValue="generate" className="space-y-8 animate-fade-in">
             <TabsList className="grid w-full md:w-auto grid-cols-2 gap-2">
               <TabsTrigger value="generate">Generate Reports</TabsTrigger>
-              <TabsTrigger value="history">Report History</TabsTrigger>
+              <TabsTrigger value="students">Manage Students</TabsTrigger>
             </TabsList>
 
             <TabsContent value="generate" className="space-y-8">
@@ -157,7 +294,7 @@ const Reports = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Report Type</label>
-                      <Select defaultValue="individual">
+                      <Select defaultValue="class">
                         <SelectTrigger>
                           <SelectValue placeholder="Select Type" />
                         </SelectTrigger>
@@ -172,31 +309,35 @@ const Reports = () => {
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Class</label>
-                      <Select defaultValue="form3">
+                      <Select 
+                        value={selectedClass}
+                        onValueChange={setSelectedClass}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Class" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="form1">Form 1</SelectItem>
-                          <SelectItem value="form2">Form 2</SelectItem>
-                          <SelectItem value="form3">Form 3</SelectItem>
-                          <SelectItem value="form4">Form 4</SelectItem>
-                          <SelectItem value="all">All Classes</SelectItem>
+                          {forms.map(form => (
+                            <SelectItem key={form} value={form}>{form}</SelectItem>
+                          ))}
+                          <SelectItem value="All Forms">All Classes</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Period</label>
-                      <Select defaultValue="term2">
+                      <Select 
+                        value={selectedPeriod}
+                        onValueChange={setSelectedPeriod}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Period" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="term1">Term 1, 2023</SelectItem>
-                          <SelectItem value="term2">Term 2, 2023</SelectItem>
-                          <SelectItem value="term3">Term 3, 2023</SelectItem>
-                          <SelectItem value="year">Full Year 2023</SelectItem>
+                          {terms.map(term => (
+                            <SelectItem key={term} value={term}>{`${term}, ${selectedYear}`}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -206,14 +347,17 @@ const Reports = () => {
                     <Button
                       variant="outline"
                       className="gap-2"
-                      onClick={() => toast("Report preview not available in demo")}
+                      onClick={handleGenerateClassReport}
                     >
                       <FileText size={16} />
-                      Preview
+                      Generate Class Report
                     </Button>
-                    <Button className="gap-2" onClick={handleGenerateReport}>
+                    <Button 
+                      className="gap-2" 
+                      onClick={handleGenerateReport}
+                    >
                       <Download size={16} />
-                      Generate Report
+                      Generate School Report
                     </Button>
                   </div>
                 </CardContent>
@@ -226,7 +370,7 @@ const Reports = () => {
                     <div>
                       <CardTitle>Class Performance</CardTitle>
                       <CardDescription>
-                        Average grades by class for Term 2, 2023
+                        Average grades by class for {selectedPeriod}, {selectedYear}
                       </CardDescription>
                     </div>
                   </CardHeader>
@@ -234,13 +378,16 @@ const Reports = () => {
                     <div className="h-72">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={classPerformance}
+                          data={forms.map(form => ({
+                            name: form,
+                            average: Math.floor(Math.random() * 20) + 60 // Random data for demo
+                          }))}
                           margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                           <XAxis dataKey="name" />
                           <YAxis domain={[0, 100]} />
-                          <Tooltip />
+                          <RechartsTooltip />
                           <Bar
                             dataKey="average"
                             name="Average Score"
@@ -265,7 +412,7 @@ const Reports = () => {
                     <div>
                       <CardTitle>Grade Distribution</CardTitle>
                       <CardDescription>
-                        Overall grade distribution for Term 2, 2023
+                        Overall grade distribution for {selectedPeriod}, {selectedYear}
                       </CardDescription>
                     </div>
                   </CardHeader>
@@ -324,172 +471,135 @@ const Reports = () => {
                   </CardFooter>
                 </Card>
               </div>
-
-              <Card className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Subject Performance Analysis</CardTitle>
-                  <CardDescription>
-                    Average scores by subject across all classes for Term 2, 2023
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={subjectPerformance}
-                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-                        layout="vertical"
-                      >
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} horizontal={false} />
-                        <XAxis type="number" domain={[0, 100]} />
-                        <YAxis dataKey="name" type="category" width={120} />
-                        <Tooltip />
-                        <Bar
-                          dataKey="average"
-                          name="Average Score"
-                          fill="#3b82f6"
-                          radius={[0, 4, 4, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-muted/10 border-t flex justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    Data updated on July 15, 2023
-                  </div>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Download size={14} />
-                    Export Data
-                  </Button>
-                </CardFooter>
-              </Card>
             </TabsContent>
 
-            <TabsContent value="history" className="animate-fade-in">
+            <TabsContent value="students" className="animate-fade-in">
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>Generated Reports</CardTitle>
+                      <CardTitle>Student Management</CardTitle>
                       <CardDescription>
-                        Previously generated reports and analyses
+                        Add, edit, and generate reports for students
                       </CardDescription>
                     </div>
-                    <div className="flex gap-4 items-center">
-                      <div className="flex items-center gap-2">
-                        <Filter size={14} className="text-muted-foreground" />
-                        <Select
-                          value={selectedType}
-                          onValueChange={setSelectedType}
-                        >
-                          <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="All Types" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="All Types">All Types</SelectItem>
-                            <SelectItem value="Individual">Individual</SelectItem>
-                            <SelectItem value="Class">Class</SelectItem>
-                            <SelectItem value="Subject">Subject</SelectItem>
-                            <SelectItem value="School">School</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Select
-                        value={selectedPeriod}
-                        onValueChange={setSelectedPeriod}
+                    <Button 
+                      className="gap-2"
+                      onClick={() => {
+                        setSelectedStudent(undefined);
+                        setIsStudentDialogOpen(true);
+                      }}
+                    >
+                      <PlusCircle size={16} />
+                      Add Student
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="relative flex items-center col-span-1">
+                      <Input
+                        placeholder="Search students by name or admission number..."
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        className="pl-9"
+                      />
+                      <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={selectedClass} 
+                        onValueChange={setSelectedClass}
                       >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue placeholder="Period" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Class" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Term 1, 2023">Term 1, 2023</SelectItem>
-                          <SelectItem value="Term 2, 2023">Term 2, 2023</SelectItem>
-                          <SelectItem value="Term 3, 2023">Term 3, 2023</SelectItem>
+                          {forms.map(form => (
+                            <SelectItem key={form} value={form}>{form}</SelectItem>
+                          ))}
+                          <SelectItem value="All Forms">All Classes</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="p-0">
+
                   <div className="border rounded-md overflow-hidden">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-muted/50">
-                          <th className="text-left py-3 px-4 font-medium">Report Name</th>
-                          <th className="text-left py-3 px-4 font-medium">Type</th>
-                          <th className="text-left py-3 px-4 font-medium">Target</th>
-                          <th className="text-left py-3 px-4 font-medium">Date</th>
-                          <th className="text-left py-3 px-4 font-medium">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {reports.map((report) => (
-                          <tr key={report.id} className="border-t hover:bg-muted/20">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <FileText
-                                  size={16}
-                                  className="text-primary"
-                                />
-                                {report.title}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-muted-foreground">
-                              {report.type}
-                            </td>
-                            <td className="py-3 px-4 text-muted-foreground">
-                              {report.target}
-                            </td>
-                            <td className="py-3 px-4 text-muted-foreground">
-                              {report.date}
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => handleDownloadReport(report.id)}
-                                >
-                                  <Download size={16} />
-                                  <span className="sr-only">Download</span>
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => 
-                                    toast("Print functionality not available in demo")
-                                  }
-                                >
-                                  <Printer size={16} />
-                                  <span className="sr-only">Print</span>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Admission Number</TableHead>
+                          <TableHead>Form</TableHead>
+                          <TableHead>Gender</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {isDataLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8">
+                              Loading students...
+                            </TableCell>
+                          </TableRow>
+                        ) : filteredStudents.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8">
+                              {searchTerm ? "No students match your search" : "No students found"}
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredStudents.map((student) => (
+                            <TableRow key={student.id}>
+                              <TableCell>{student.name}</TableCell>
+                              <TableCell>{student.admission_number || "—"}</TableCell>
+                              <TableCell>{student.form}</TableCell>
+                              <TableCell>{student.gender || "—"}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedStudent(student);
+                                      setIsStudentDialogOpen(true);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleGenerateStudentReport(student)}
+                                  >
+                                    Report
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t mt-3 flex justify-between">
+                <CardFooter className="border-t py-4">
                   <div className="text-sm text-muted-foreground">
-                    Showing 5 of 24 reports
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      Previous
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Next
-                    </Button>
+                    Showing {filteredStudents.length} of {students.length} students
                   </div>
                 </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
+          
+          <StudentDialog
+            isOpen={isStudentDialogOpen}
+            onOpenChange={setIsStudentDialogOpen}
+            student={selectedStudent}
+            onSubmit={handleStudentSubmit}
+            isLoading={isLoading}
+            title={selectedStudent ? "Edit Student" : "Add New Student"}
+          />
         </Container>
       </div>
     </div>

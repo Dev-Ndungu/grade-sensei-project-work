@@ -33,6 +33,89 @@ export type Database = {
         }
         Relationships: []
       }
+      student_grades: {
+        Row: {
+          created_at: string | null
+          grade: string
+          id: string
+          score: number
+          status: string | null
+          student_id: string
+          subject: string
+          term: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          grade: string
+          id?: string
+          score: number
+          status?: string | null
+          student_id: string
+          subject: string
+          term: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          grade?: string
+          id?: string
+          score?: number
+          status?: string | null
+          student_id?: string
+          subject?: string
+          term?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          admission_number: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          form: string
+          gender: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admission_number?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          form: string
+          gender?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admission_number?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          form?: string
+          gender?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
