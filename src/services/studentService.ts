@@ -6,7 +6,7 @@ import { Student, StudentInsert, StudentGrade, StudentGradeInsert } from "@/type
 export async function fetchStudents(): Promise<Student[]> {
   try {
     const { data, error } = await supabase
-      .from('students' as any)
+      .from('students')
       .select('*')
       .order('name');
 
@@ -14,7 +14,7 @@ export async function fetchStudents(): Promise<Student[]> {
       throw error;
     }
 
-    return data || [];
+    return (data as Student[]) || [];
   } catch (error: any) {
     toast.error(`Error fetching students: ${error.message}`);
     return [];
@@ -24,7 +24,7 @@ export async function fetchStudents(): Promise<Student[]> {
 export async function fetchStudent(id: string): Promise<Student | null> {
   try {
     const { data, error } = await supabase
-      .from('students' as any)
+      .from('students')
       .select('*')
       .eq('id', id)
       .single();
@@ -33,7 +33,7 @@ export async function fetchStudent(id: string): Promise<Student | null> {
       throw error;
     }
 
-    return data;
+    return data as Student;
   } catch (error: any) {
     toast.error(`Error fetching student: ${error.message}`);
     return null;
@@ -43,7 +43,7 @@ export async function fetchStudent(id: string): Promise<Student | null> {
 export async function fetchStudentGrades(studentId: string): Promise<StudentGrade[]> {
   try {
     const { data, error } = await supabase
-      .from('student_grades' as any)
+      .from('student_grades')
       .select('*')
       .eq('student_id', studentId)
       .order('subject');
@@ -52,7 +52,7 @@ export async function fetchStudentGrades(studentId: string): Promise<StudentGrad
       throw error;
     }
 
-    return data || [];
+    return (data as StudentGrade[]) || [];
   } catch (error: any) {
     toast.error(`Error fetching student grades: ${error.message}`);
     return [];
@@ -62,7 +62,7 @@ export async function fetchStudentGrades(studentId: string): Promise<StudentGrad
 export async function addStudent(student: StudentInsert): Promise<Student | null> {
   try {
     const { data, error } = await supabase
-      .from('students' as any)
+      .from('students')
       .insert([student])
       .select()
       .single();
@@ -72,7 +72,7 @@ export async function addStudent(student: StudentInsert): Promise<Student | null
     }
 
     toast.success("Student added successfully");
-    return data;
+    return data as Student;
   } catch (error: any) {
     toast.error(`Error adding student: ${error.message}`);
     return null;
@@ -82,7 +82,7 @@ export async function addStudent(student: StudentInsert): Promise<Student | null
 export async function updateStudent(id: string, updates: StudentInsert): Promise<Student | null> {
   try {
     const { data, error } = await supabase
-      .from('students' as any)
+      .from('students')
       .update(updates)
       .eq('id', id)
       .select()
@@ -93,7 +93,7 @@ export async function updateStudent(id: string, updates: StudentInsert): Promise
     }
 
     toast.success("Student updated successfully");
-    return data;
+    return data as Student;
   } catch (error: any) {
     toast.error(`Error updating student: ${error.message}`);
     return null;
@@ -103,7 +103,7 @@ export async function updateStudent(id: string, updates: StudentInsert): Promise
 export async function deleteStudent(id: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('students' as any)
+      .from('students')
       .delete()
       .eq('id', id);
 
@@ -123,7 +123,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
   try {
     // Check if grade exists
     const { data: existing } = await supabase
-      .from('student_grades' as any)
+      .from('student_grades')
       .select('*')
       .eq('student_id', grade.student_id)
       .eq('subject', grade.subject)
@@ -136,9 +136,9 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
     if (existing) {
       // Update existing grade
       const { data, error } = await supabase
-        .from('student_grades' as any)
+        .from('student_grades')
         .update(grade)
-        .eq('id', existing.id)
+        .eq('id', (existing as StudentGrade).id)
         .select()
         .single();
         
@@ -148,7 +148,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
     } else {
       // Insert new grade
       const { data, error } = await supabase
-        .from('student_grades' as any)
+        .from('student_grades')
         .insert([grade])
         .select()
         .single();
@@ -158,7 +158,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
       toast.success("Grade added successfully");
     }
 
-    return result;
+    return result as StudentGrade;
   } catch (error: any) {
     toast.error(`Error saving grade: ${error.message}`);
     return null;
@@ -168,7 +168,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
 export async function getStudentsByForm(form: string): Promise<Student[]> {
   try {
     const { data, error } = await supabase
-      .from('students' as any)
+      .from('students')
       .select('*')
       .eq('form', form)
       .order('name');
@@ -177,7 +177,7 @@ export async function getStudentsByForm(form: string): Promise<Student[]> {
       throw error;
     }
 
-    return data || [];
+    return (data as Student[]) || [];
   } catch (error: any) {
     toast.error(`Error fetching students by form: ${error.message}`);
     return [];
@@ -187,7 +187,7 @@ export async function getStudentsByForm(form: string): Promise<Student[]> {
 export async function getStudentGradesByTerm(term: string, year: number): Promise<any[]> {
   try {
     const { data, error } = await supabase
-      .from('student_grades' as any)
+      .from('student_grades')
       .select('*, students(name, form)')
       .eq('term', term)
       .eq('year', year);

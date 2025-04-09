@@ -1,7 +1,5 @@
 
-import { Database } from "@/integrations/supabase/types";
-
-// Define the types manually since the generated types haven't been updated yet
+// Define the types manually since we can't use the generated types
 export interface Student {
   id: string;
   user_id: string;
