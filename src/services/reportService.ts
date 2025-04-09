@@ -3,22 +3,26 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Student, StudentGrade } from '@/types/student';
 import { getGradeFromScore } from '@/utils/gradeUtils';
+import { SchoolInfo } from './schoolService';
 
 export const generateStudentReport = (
   student: Student,
   grades: StudentGrade[],
   term: string,
-  year: number
+  year: number,
+  schoolInfo?: SchoolInfo | null
 ) => {
   const doc = new jsPDF();
 
-  // Add the school logo (placeholder)
-  // doc.addImage('school-logo.png', 'PNG', 15, 10, 30, 30);
+  // Add the school logo if available
+  // if (schoolInfo?.logo) {
+  //   doc.addImage(schoolInfo.logo, 'PNG', 15, 10, 30, 30);
+  // }
   
-  // Report header
+  // Report header using school info if available
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('SCHOOL NAME', 105, 20, { align: 'center' });
+  doc.text(schoolInfo?.name || 'SCHOOL NAME', 105, 20, { align: 'center' });
   
   doc.setFontSize(16);
   doc.text('ACADEMIC REPORT CARD', 105, 30, { align: 'center' });
@@ -27,10 +31,15 @@ export const generateStudentReport = (
   doc.setFont('helvetica', 'normal');
   doc.text(`${term} - ${year}`, 105, 38, { align: 'center' });
   
+  if (schoolInfo?.motto) {
+    doc.setFontSize(10);
+    doc.text(`"${schoolInfo.motto}"`, 105, 45, { align: 'center' });
+  }
+  
   // Student information
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  const startY = 50;
+  const startY = 55;
   
   doc.text(`Name: ${student.name}`, 15, startY);
   doc.text(`Form: ${student.form}`, 15, startY + 7);
@@ -111,7 +120,12 @@ export const generateStudentReport = (
   
   // Signature
   doc.setFont('helvetica', 'bold');
-  doc.text('Principal\'s Signature: _______________________', 15, finalY + 65);
+  if (schoolInfo?.principal_name) {
+    doc.text(`Principal's Signature: _______________________`, 15, finalY + 65);
+    doc.text(`${schoolInfo.principal_name}`, 15, finalY + 72);
+  } else {
+    doc.text('Principal\'s Signature: _______________________', 15, finalY + 65);
+  }
   doc.text('Date: _______________________', 130, finalY + 65);
   
   // Footer
@@ -129,14 +143,15 @@ export const generateClassReport = (
   students: Student[],
   grades: StudentGrade[],
   term: string,
-  year: number
+  year: number,
+  schoolInfo?: SchoolInfo | null
 ) => {
   const doc = new jsPDF();
 
   // Report header
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('SCHOOL NAME', 105, 20, { align: 'center' });
+  doc.text(schoolInfo?.name || 'SCHOOL NAME', 105, 20, { align: 'center' });
   
   doc.setFontSize(16);
   doc.text(`${form} - CLASS REPORT`, 105, 30, { align: 'center' });
@@ -144,6 +159,11 @@ export const generateClassReport = (
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
   doc.text(`${term} - ${year}`, 105, 38, { align: 'center' });
+  
+  if (schoolInfo?.motto) {
+    doc.setFontSize(10);
+    doc.text(`"${schoolInfo.motto}"`, 105, 45, { align: 'center' });
+  }
   
   // Group student grades by student
   const studentGrades = new Map();
@@ -231,6 +251,21 @@ export const generateClassReport = (
     doc.text(`${grade.grade}: ${grade.count} students (${grade.percentage}%)`, 15, gradeLine);
     gradeLine += 7;
   });
+  
+  // Add school info to footer if available
+  if (schoolInfo) {
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    
+    let footerText = '';
+    if (schoolInfo.address) footerText += `${schoolInfo.address} | `;
+    if (schoolInfo.phone) footerText += `Tel: ${schoolInfo.phone} | `;
+    if (schoolInfo.email) footerText += `Email: ${schoolInfo.email}`;
+    
+    if (footerText) {
+      doc.text(footerText, 105, pageHeight - 15, { align: 'center' });
+    }
+  }
   
   return doc;
 };

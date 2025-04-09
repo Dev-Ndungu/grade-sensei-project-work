@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
 import {
@@ -31,6 +31,9 @@ import {
   Activity,
   BarChart2,
 } from "lucide-react";
+import { fetchStudents } from "@/services/studentService";
+import { fetchSchoolInfo } from "@/services/schoolService";
+import { useAuth } from "@/context/AuthContext";
 
 // Sample data for demonstration
 const performanceData = [
@@ -55,10 +58,36 @@ const recentActivity = [
 ];
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [schoolName, setSchoolName] = useState("School Dashboard");
 
   // This would come from authentication in a real app
   const userRole = "Administrator"; // or "Teacher" or "Student"
+
+  // Fetch students count and school info on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch students
+        const students = await fetchStudents();
+        setTotalStudents(students.length);
+
+        // Fetch school info
+        const schoolInfo = await fetchSchoolInfo();
+        if (schoolInfo) {
+          setSchoolName(schoolInfo.name);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const StatCard = ({ title, value, icon, trend }: { title: string; value: string; icon: React.ReactNode; trend?: { value: string; positive: boolean } }) => (
     <Card className="overflow-hidden">
@@ -91,7 +120,7 @@ const Dashboard = () => {
           <div className="mb-8 animate-slide-down">
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back, {userRole}. Here's what's happening at your school.
+              Welcome back, {userRole}. Here's what's happening at {schoolName}.
             </p>
           </div>
 
@@ -112,7 +141,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                   title="Total Students"
-                  value="537"
+                  value={totalStudents.toString()}
                   icon={<Users size={20} />}
                   trend={{ value: "2.5%", positive: true }}
                 />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
@@ -56,6 +57,7 @@ import { Student, StudentGrade } from "@/types/student";
 import { forms, terms } from "@/types/grades";
 import { generateClassReport, generateStudentReport } from "@/services/reportService";
 import { useAuth } from "@/context/AuthContext";
+import { fetchSchoolInfo, SchoolInfo } from "@/services/schoolService";
 
 // Sample data for demonstration
 const gradeDistribution = [
@@ -79,6 +81,7 @@ const Reports = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
 
   // Load student data
   useEffect(() => {
@@ -88,6 +91,10 @@ const Reports = () => {
         const data = await fetchStudents();
         setStudents(data);
         setFilteredStudents(data);
+        
+        // Fetch school info
+        const info = await fetchSchoolInfo();
+        setSchoolInfo(info);
       } catch (error) {
         console.error("Error loading students:", error);
       } finally {
@@ -184,7 +191,7 @@ const Reports = () => {
       // Fetch the actual grades from the database
       const grades = await fetchStudentGrades(student.id);
       
-      const doc = generateStudentReport(student, grades, selectedPeriod, selectedYear);
+      const doc = generateStudentReport(student, grades, selectedPeriod, selectedYear, schoolInfo);
       
       // Download the PDF
       doc.save(`${student.name}_${selectedPeriod}_${selectedYear}_Report.pdf`);
@@ -217,7 +224,7 @@ const Reports = () => {
       // Flatten the array of grade arrays
       const allGrades = allGradesResults.flat();
       
-      const doc = generateClassReport(selectedClass, classStudents, allGrades, selectedPeriod, selectedYear);
+      const doc = generateClassReport(selectedClass, classStudents, allGrades, selectedPeriod, selectedYear, schoolInfo);
       
       // Download the PDF
       doc.save(`${selectedClass}_${selectedPeriod}_${selectedYear}_Report.pdf`);
