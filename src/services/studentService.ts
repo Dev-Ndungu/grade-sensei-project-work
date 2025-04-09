@@ -6,7 +6,7 @@ import { Student, StudentInsert, StudentGrade, StudentGradeInsert } from "@/type
 export async function fetchStudents(): Promise<Student[]> {
   try {
     const { data, error } = await supabase
-      .from('students')
+      .from('students' as any)
       .select('*')
       .order('name');
 
@@ -24,7 +24,7 @@ export async function fetchStudents(): Promise<Student[]> {
 export async function fetchStudent(id: string): Promise<Student | null> {
   try {
     const { data, error } = await supabase
-      .from('students')
+      .from('students' as any)
       .select('*')
       .eq('id', id)
       .single();
@@ -43,7 +43,7 @@ export async function fetchStudent(id: string): Promise<Student | null> {
 export async function fetchStudentGrades(studentId: string): Promise<StudentGrade[]> {
   try {
     const { data, error } = await supabase
-      .from('student_grades')
+      .from('student_grades' as any)
       .select('*')
       .eq('student_id', studentId)
       .order('subject');
@@ -62,7 +62,7 @@ export async function fetchStudentGrades(studentId: string): Promise<StudentGrad
 export async function addStudent(student: StudentInsert): Promise<Student | null> {
   try {
     const { data, error } = await supabase
-      .from('students')
+      .from('students' as any)
       .insert([student])
       .select()
       .single();
@@ -82,7 +82,7 @@ export async function addStudent(student: StudentInsert): Promise<Student | null
 export async function updateStudent(id: string, updates: StudentInsert): Promise<Student | null> {
   try {
     const { data, error } = await supabase
-      .from('students')
+      .from('students' as any)
       .update(updates)
       .eq('id', id)
       .select()
@@ -103,7 +103,7 @@ export async function updateStudent(id: string, updates: StudentInsert): Promise
 export async function deleteStudent(id: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('students')
+      .from('students' as any)
       .delete()
       .eq('id', id);
 
@@ -123,7 +123,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
   try {
     // Check if grade exists
     const { data: existing } = await supabase
-      .from('student_grades')
+      .from('student_grades' as any)
       .select('*')
       .eq('student_id', grade.student_id)
       .eq('subject', grade.subject)
@@ -136,7 +136,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
     if (existing) {
       // Update existing grade
       const { data, error } = await supabase
-        .from('student_grades')
+        .from('student_grades' as any)
         .update(grade)
         .eq('id', existing.id)
         .select()
@@ -148,7 +148,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
     } else {
       // Insert new grade
       const { data, error } = await supabase
-        .from('student_grades')
+        .from('student_grades' as any)
         .insert([grade])
         .select()
         .single();
@@ -168,7 +168,7 @@ export async function addOrUpdateGrade(grade: StudentGradeInsert): Promise<Stude
 export async function getStudentsByForm(form: string): Promise<Student[]> {
   try {
     const { data, error } = await supabase
-      .from('students')
+      .from('students' as any)
       .select('*')
       .eq('form', form)
       .order('name');
@@ -184,10 +184,10 @@ export async function getStudentsByForm(form: string): Promise<Student[]> {
   }
 }
 
-export async function getStudentGradesByTerm(term: string, year: number): Promise<StudentGrade[]> {
+export async function getStudentGradesByTerm(term: string, year: number): Promise<any[]> {
   try {
     const { data, error } = await supabase
-      .from('student_grades')
+      .from('student_grades' as any)
       .select('*, students(name, form)')
       .eq('term', term)
       .eq('year', year);

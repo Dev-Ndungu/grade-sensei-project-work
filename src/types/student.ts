@@ -1,10 +1,78 @@
 
 import { Database } from "@/integrations/supabase/types";
 
-export type Student = Database['public']['Tables']['students']['Row'];
-export type StudentInsert = Database['public']['Tables']['students']['Insert'];
-export type StudentUpdate = Database['public']['Tables']['students']['Update'];
+// Define the types manually since the generated types haven't been updated yet
+export interface Student {
+  id: string;
+  user_id: string;
+  name: string;
+  form: string;
+  admission_number?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
 
-export type StudentGrade = Database['public']['Tables']['student_grades']['Row'];
-export type StudentGradeInsert = Database['public']['Tables']['student_grades']['Insert'];
-export type StudentGradeUpdate = Database['public']['Tables']['student_grades']['Update'];
+export interface StudentInsert {
+  id?: string;
+  user_id: string;
+  name: string;
+  form: string;
+  admission_number?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface StudentUpdate {
+  id?: string;
+  user_id?: string;
+  name?: string;
+  form?: string;
+  admission_number?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface StudentGrade {
+  id: string;
+  student_id: string;
+  subject: string;
+  term: string;
+  year: number;
+  score: number;
+  grade: string;
+  status?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface StudentGradeInsert {
+  id?: string;
+  student_id: string;
+  subject: string;
+  term: string;
+  year: number;
+  score: number;
+  grade: string;
+  status?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface StudentGradeUpdate {
+  id?: string;
+  student_id?: string;
+  subject?: string;
+  term?: string;
+  year?: number;
+  score?: number;
+  grade?: string;
+  status?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
