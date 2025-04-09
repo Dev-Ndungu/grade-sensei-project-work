@@ -13,6 +13,10 @@ import {
   LogOut,
   Menu,
   X,
+  BookOpen,
+  MessageSquare,
+  Calendar,
+  MessageSquareHeart,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
@@ -56,6 +60,16 @@ const NavBar = () => {
       label: "Grades",
       href: "/grades",
       icon: <GraduationCap size={18} />,
+    },
+    {
+      label: "Assignments",
+      href: "/assignments",
+      icon: <BookOpen size={18} />,
+    },
+    {
+      label: "Communications",
+      href: "/communications",
+      icon: <MessageSquare size={18} />,
     },
     {
       label: "Reports",

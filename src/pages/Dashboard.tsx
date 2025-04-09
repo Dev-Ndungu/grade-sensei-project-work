@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Container } from "@/components/ui/container";
+import { Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -30,6 +32,10 @@ import {
   Users,
   Activity,
   BarChart2,
+  MessageSquare,
+  PlusCircle,
+  FileText,
+  MessageSquareHeart,
 } from "lucide-react";
 import { fetchStudents } from "@/services/studentService";
 import { fetchSchoolInfo } from "@/services/schoolService";
@@ -112,8 +118,22 @@ const Dashboard = () => {
     </Card>
   );
 
+  const QuickActionCard = ({ title, description, icon, href }: { title: string; description: string; icon: React.ReactNode; href: string }) => (
+    <Link to={href}>
+      <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+        <CardHeader className="pb-2">
+          <div className="p-2 bg-primary/10 rounded-full text-primary w-10 h-10 flex items-center justify-center mb-2">
+            {icon}
+          </div>
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+      </Card>
+    </Link>
+  );
+
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 w-full">
       <NavBar />
       <div className="pt-24 pb-16">
         <Container>
@@ -122,6 +142,33 @@ const Dashboard = () => {
             <p className="text-muted-foreground">
               Welcome back, {userRole}. Here's what's happening at {schoolName}.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <QuickActionCard 
+              title="View Analytics" 
+              description="Check performance metrics across classes"
+              icon={<BarChart2 size={20} />}
+              href="/dashboard?tab=overview"
+            />
+            <QuickActionCard 
+              title="Manage Grades" 
+              description="Enter and edit student grades"
+              icon={<GraduationCap size={20} />}
+              href="/grades"
+            />
+            <QuickActionCard 
+              title="Create Assignment" 
+              description="Add new assignments for students"
+              icon={<PlusCircle size={20} />}
+              href="/assignments"
+            />
+            <QuickActionCard 
+              title="Communicate" 
+              description="Message students and schedule meetings"
+              icon={<MessageSquare size={20} />}
+              href="/communications"
+            />
           </div>
 
           <Tabs

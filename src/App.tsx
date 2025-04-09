@@ -15,6 +15,11 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Assignments from "./pages/Assignments";
+import Communications from "./pages/Communications";
+import Messages from "./pages/Messages";
+import Meetings from "./pages/Meetings";
+import Feedback from "./pages/Feedback";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +41,11 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
+            <Route path="/communications" element={<ProtectedRoute><Communications /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
+            <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             
             {/* 404 route */}
