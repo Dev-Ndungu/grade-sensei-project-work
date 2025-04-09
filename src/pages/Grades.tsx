@@ -21,6 +21,37 @@ import { fetchStudents, addOrUpdateGrade, getStudentGradesByTerm } from "@/servi
 import { Student, StudentGrade } from "@/types/student";
 import { useAuth } from "@/context/AuthContext";
 
+// Helper function to convert database student to format needed by GradesTable
+const mapStudentForGradesTable = (
+  student: Student, 
+  grades: StudentGrade[]
+): {
+  id: string;
+  name: string;
+  form: string;
+  subjects: Record<string, SubjectGrade>;
+} => {
+  const studentSubjects: Record<string, SubjectGrade> = {};
+  
+  // Initialize with empty values if no grades exist
+  grades.forEach(grade => {
+    if (grade.student_id === student.id) {
+      studentSubjects[grade.subject] = {
+        score: grade.score,
+        grade: grade.grade,
+        status: grade.status as "approved" | "pending" || "pending"
+      };
+    }
+  });
+  
+  return {
+    id: student.id,
+    name: student.name,
+    form: student.form,
+    subjects: studentSubjects
+  };
+};
+
 const Grades = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,26 +63,37 @@ const Grades = () => {
   const [editedGrades, setEditedGrades] = useState<Record<string, SubjectGrade>>({});
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [mappedStudents, setMappedStudents] = useState<{
+    id: string;
+    name: string;
+    form: string;
+    subjects: Record<string, SubjectGrade>;
+  }[]>([]);
+  const [grades, setGrades] = useState<StudentGrade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch students on component mount
+  // Fetch students and grades on component mount
   useEffect(() => {
-    const loadStudents = async () => {
+    const loadData = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchStudents();
-        setStudents(data);
+        const studentsData = await fetchStudents();
+        setStudents(studentsData);
+        
+        // Fetch grades for the selected term and year
+        const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
+        setGrades(gradesData);
       } catch (error) {
-        console.error("Error loading students:", error);
+        console.error("Error loading data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (user) {
-      loadStudents();
+      loadData();
     }
-  }, [user]);
+  }, [user, selectedTerm, selectedYear]);
 
   // Filter students whenever the selectedForm or searchTerm changes
   useEffect(() => {
@@ -69,6 +111,14 @@ const Grades = () => {
     
     setFilteredStudents(filtered);
   }, [students, selectedForm, searchTerm]);
+
+  // Map students to the format needed by GradesTable
+  useEffect(() => {
+    const mapped = filteredStudents.map(student => 
+      mapStudentForGradesTable(student, grades)
+    );
+    setMappedStudents(mapped);
+  }, [filteredStudents, grades]);
 
   const handleGradeChange = (studentId: string, subject: string, value: string) => {
     const newScore = parseInt(value, 10);
@@ -102,6 +152,11 @@ const Grades = () => {
     try {
       await Promise.all(savePromises);
       toast.success("All grades saved successfully");
+      
+      // Refresh grades data
+      const gradesData = await getStudentGradesByTerm(selectedTerm, selectedYear);
+      setGrades(gradesData);
+      
       setEditMode(false);
       setEditedGrades({});
     } catch (error) {
@@ -171,7 +226,7 @@ const Grades = () => {
                 </div>
               ) : (
                 <GradesTable 
-                  students={filteredStudents}
+                  students={mappedStudents}
                   editMode={editMode}
                   editedGrades={editedGrades}
                   onGradeChange={handleGradeChange}
@@ -199,3 +254,4 @@ const Grades = () => {
 };
 
 export default Grades;
+

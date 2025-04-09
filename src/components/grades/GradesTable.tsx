@@ -8,20 +8,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Student, subjects } from "@/types/grades";
+import { SubjectGrade } from "@/types/grades";
 import GradeCell from "./GradeCell";
 import { calculateAverage, getGradeFromScore } from "@/utils/gradeUtils";
 import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface GradesTableProps {
-  students: Student[];
-  editMode: boolean;
-  editedGrades: Record<string, any>;
-  onGradeChange: (studentId: number, subject: string, value: string) => void;
+interface GradeTableStudent {
+  id: string;
+  name: string;
+  form: string;
+  subjects: Record<string, SubjectGrade>;
 }
 
-type SortField = "name" | typeof subjects[number] | "average";
+interface GradesTableProps {
+  students: GradeTableStudent[];
+  editMode: boolean;
+  editedGrades: Record<string, any>;
+  onGradeChange: (studentId: string, subject: string, value: string) => void;
+}
+
+type SortField = "name" | string | "average";
 type SortDirection = "asc" | "desc";
 
 const GradesTable: React.FC<GradesTableProps> = ({
@@ -32,6 +39,16 @@ const GradesTable: React.FC<GradesTableProps> = ({
 }) => {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  
+  // Extract subjects from the first student that has any
+  const subjectsArray = React.useMemo(() => {
+    for (const student of students) {
+      if (student.subjects && Object.keys(student.subjects).length > 0) {
+        return Object.keys(student.subjects);
+      }
+    }
+    return ["Mathematics", "English", "Physics", "Chemistry", "Biology"];
+  }, [students]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -80,7 +97,7 @@ const GradesTable: React.FC<GradesTableProps> = ({
                 )}
               </Button>
             </TableHead>
-            {subjects.map((subject) => (
+            {subjectsArray.map((subject) => (
               <TableHead key={subject} className="text-center">
                 <Button 
                   variant="ghost" 
@@ -118,8 +135,8 @@ const GradesTable: React.FC<GradesTableProps> = ({
               <TableCell className="font-medium">
                 {student.name}
               </TableCell>
-              {subjects.map((subject) => {
-                const originalGrade = student.subjects[subject];
+              {subjectsArray.map((subject) => {
+                const originalGrade = student.subjects[subject] || { score: 0, grade: "N/A", status: "pending" };
                 const editedGrade = editedGrades[`${student.id}-${subject}`];
                 const currentGrade = editedGrade || originalGrade;
                 
@@ -152,3 +169,4 @@ const GradesTable: React.FC<GradesTableProps> = ({
 };
 
 export default GradesTable;
+
