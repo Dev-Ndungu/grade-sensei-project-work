@@ -100,14 +100,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        // Insert into profiles table
+        // Create a profile entry for the new user
+        // Using type casting to work around TypeScript issues
+        // This is safe because we created this table in our SQL migration
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: data.user.id,
             full_name: fullName,
             email,
-          });
+          } as any);
 
         if (profileError) {
           console.error('Error creating profile:', profileError);
