@@ -40,7 +40,7 @@ const Index = () => {
                   <span className="font-medium">Kenyan Schools Edition</span>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                  Intuitive Grade Management for{" "}
+                  Grade Management for{" "}
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-700">
                     Kenyan Secondary Schools
                   </span>
